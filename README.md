@@ -221,7 +221,7 @@ limiter := ratelimit.New(60, 60)
 ## 🎯 Future Goals / Roadmap
 
 ### Short Term
-- [ ] Add unit tests for rate limiter
+- [x] Add unit tests for rate limiter
 - [ ] Add remaining-token visibility endpoint
 - [ ] Structured logging (zap / zerolog)
 - [ ] Graceful shutdown handling

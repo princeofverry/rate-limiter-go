@@ -5,12 +5,15 @@ import (
 	"time"
 )
 
+type nowfunc func() time.Time
+
 type bucket struct {
 	capacity int
 	tokens   float64
 	refillPS float64 // refill per second
 	last     time.Time
 	mu sync.Mutex
+	now nowfunc
 }
 
 func newBucket(capacity, refillPerMinute int) *bucket {
@@ -19,6 +22,7 @@ func newBucket(capacity, refillPerMinute int) *bucket {
 		tokens: float64(capacity),
 		refillPS: float64(refillPerMinute) / 60,
 		last: time.Now(),
+		now: time.Now,
 	}
 }
 
@@ -27,7 +31,7 @@ func (b *bucket) allow(n float64) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	now := time.Now()
+	now := b.now()
 	// counting the time
 	elapsed := now.Sub(b.last).Seconds()
 	b.last = now
