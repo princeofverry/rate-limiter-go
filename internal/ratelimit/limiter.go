@@ -58,6 +58,12 @@ type Limiter struct {
 	buckets map[string]*bucket
 }
 
+type Status struct {
+	Capacity int `json:"capacity"`
+	Remaining float64 `json:"remaining"`
+	RefillPM int	`json:"refill_per_minute"`
+}
+
 func New(capacity, refillPerMinute int) *Limiter {
 	return &Limiter {
 		capacity: capacity,
@@ -76,4 +82,33 @@ func (l *Limiter) Allow(key string) bool {
 	l.mu.Unlock()
 
 	return b.allow(1)
+}
+
+func (l *Limiter) Status(key string) (Status, bool) {
+	l.mu.Lock()
+	b, ok := l.buckets[key]
+	l.mu.Unlock()
+	if !ok {
+		return Status{}, false
+	}
+	
+	// sync refill before reporting
+	b.mu.Lock()
+	now := time.Now()
+	elapsed := now.Sub(b.last).Seconds()
+	b.last = now
+
+	b.tokens += elapsed * b.refillPS
+	if b.tokens > float64(b.capacity) {
+		b.tokens = float64(b.capacity)
+	}
+	
+	st := Status {
+		Capacity: b.capacity,
+		Remaining: b.tokens,
+		RefillPM: l.refillPM,
+	}
+	b.mu.Unlock()
+	
+	return st, true
 }

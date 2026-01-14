@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"princeofverry-rate-limiter/internal/apikey"
+	"princeofverry-rate-limiter/internal/ratelimit"
 	"strings"
 )
 
 type Handlers struct {
 	KeyStore *apikey.Store
+	Limiter *ratelimit.Limiter
 }
 
 func (h *Handlers) CreateKey(w http.ResponseWriter, r *http.Request) {
@@ -53,3 +55,18 @@ func (h *Handlers) Ping(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) Health(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
 }
+
+func (h *Handlers) LimitStatus(w http.ResponseWriter, r *http.Request) {
+	key := r.Header.Get("X-API-Key")
+  
+	st, ok := h.Limiter.Status(key)
+	if !ok {
+	  writeJSON(w, http.StatusNotFound, map[string]any{
+		"error": "rate limit bucket not initialized yet",
+	  })
+	  return
+	}
+  
+	writeJSON(w, http.StatusOK, st)
+  }
+  

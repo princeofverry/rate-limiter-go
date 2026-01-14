@@ -42,3 +42,22 @@ func (m *Middleware) AuthAndLimit(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (m *Middleware) AuthOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Header.Get("X-API-Key")
+		if key == "" {
+			writeJSON(w, http.StatusUnauthorized, map[string]any {
+				"error": "missing X-API-KEY",
+			})
+			return
+		}
+		if !m.KeyStore.Exists(key) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any {
+				"error": "invalid api key",
+			})
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

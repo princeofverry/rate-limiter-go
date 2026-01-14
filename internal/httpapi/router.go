@@ -9,6 +9,9 @@ func NewRouter(h *Handlers, mw *Middleware) http.Handler{
 
 	// key management
 	mux.HandleFunc("POST /v1/keys", h.CreateKey)
+	// token bucket mutable dan concurrent 
+	// jadi perlu membuat middleware auth only untuk handler LimitStatus
+	mux.Handle("/v1/limit", mw.AuthOnly(http.HandlerFunc(h.LimitStatus)))
 	mux.HandleFunc("DELETE /v1/keys/{key}", h.RevokeKey)
 
 	// protected

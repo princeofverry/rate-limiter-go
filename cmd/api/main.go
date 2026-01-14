@@ -19,7 +19,7 @@ func main() {
 	keyStore := apikey.NewStore()
 	limiter := ratelimit.New(60, 60) // capacity 60, refill 60 per minute
 
-	handlers := &httpapi.Handlers{KeyStore: keyStore}
+	handlers := &httpapi.Handlers{KeyStore: keyStore, Limiter: limiter}
 	mw := &httpapi.Middleware{KeyStore: keyStore, Limiter: limiter}
 	
 	router := httpapi.NewRouter(handlers, mw)
