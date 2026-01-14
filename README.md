@@ -49,6 +49,14 @@ Handlers
 
 ---
 
+### Middleware Design
+- **AuthOnly**  
+  Used for endpoints that require authentication but must not consume rate-limit tokens.
+- **AuthAndLimit**  
+  Used for protected endpoints that consume rate-limit tokens.
+
+---
+
 ## 📂 Project Structure
 
 ```
@@ -155,6 +163,32 @@ Response:
   "message": "pong"
 }
 ```
+
+
+---
+### Rate Limit Status (Does NOT Consume Token)
+```
+GET /v1/status
+```
+
+Headers:
+```
+X-API-Key: your-api-key
+```
+
+Responses:
+```
+{
+  "capacity": 60,
+  "remaining": 42.7,
+  "refill_per_minute": 60
+}
+```
+
+Notes:
+- Endpoint is authentication-only
+- Does not reduce remaining tokens
+- Remaining tokens are calculated in real-time
 
 ---
 
