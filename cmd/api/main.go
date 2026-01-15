@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	// "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,9 +11,14 @@ import (
 	"princeofverry-rate-limiter/internal/ratelimit"
 	"syscall"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8000"
@@ -30,9 +35,10 @@ func main() {
 	
 	router := httpapi.NewRouter(handlers, mw)
 
+	handler := mw.Logger(router)
 	srv := &http.Server{
 		Addr: ":" + port,
-		Handler: router,
+		Handler: handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
@@ -42,15 +48,15 @@ func main() {
 
 	// start server in a garoutine (so main can listen for shutdown signal)
 	go func() {
-		log.Printf("Server listening on port %s", port)
+		log.Info().Str("addr", srv.Addr).Msg("server started")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
+			log.Error().Err(err).Msg("server failed to start")
 		}
 	}()
 
 	// wait for shutdown signal
 	<-ctx.Done()
-	log.Println("shutdown signal received")
+	log.Info().Msg("shutdown signal received")
 
 	// Give in-flight requests time to finish
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -59,7 +65,7 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("graceful shutdown failed: %v", err)
 	} else {
-		log.Println("server stopped gracefully")
+		log.Info().Msg("server stopped gracefully")
 	}
 
 }

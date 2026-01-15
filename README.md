@@ -257,8 +257,8 @@ limiter := ratelimit.New(60, 60)
 ### Short Term
 - [x] Add unit tests for rate limiter
 - [x] Add remaining-token visibility endpoint
-- [ ] Structured logging (zap / zerolog)
-- [ ] Graceful shutdown handling
+- [x] Structured logging (zap / zerolog)
+- [x] Graceful shutdown handling
 
 ### Mid Term
 - [ ] Hash API keys instead of storing plaintext
